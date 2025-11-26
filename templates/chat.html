@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Chat</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="chat">
+  <div class="panel">
+    <div class="col">
+      <h2>Room-Chat</h2>
+      <label>Room</label>
+      <input id="roomInput" value="lobby">
+      <label>Name</label>
+      <input id="nameInput" value="Abass">
+      <button id="connectBtn">Verbinden</button>
+
+      <div class="status">
+        <span id="statusDot" class="dot dot-off"></span>
+        <span id="statusText">Getrennt</span>
+      </div>
+
+      <div class="row">
+        <input id="msgInput" placeholder="Nachricht..." disabled>
+        <button id="sendBtn" disabled>Senden</button>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2>Log</h2>
+      <ul id="log"></ul>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+
+    function setStatus(on) {
+      const dot = document.getElementById("statusDot");
+      const txt = document.getElementById("statusText");
+      const msg = document.getElementById("msgInput");
+      const btn = document.getElementById("sendBtn");
+      if (on) {
+        dot.className = "dot dot-on";
+        txt.textContent = "Verbunden";
+        msg.disabled = false;
+        btn.disabled = false;
+      } else {
+        dot.className = "dot dot-off";
+        txt.textContent = "Getrennt";
+        msg.disabled = true;
+        btn.disabled = true;
+      }
+    }
+
+    function appendLog(data) {
+      const log = document.getElementById("log");
+      const li = document.createElement("li");
+      const user = data.user || "USER";
+      const text = data.text || "";
+      li.textContent = user + ": " + text;
+      log.appendChild(li);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function connect() {
+      if (ws && ws.readyState === WebSocket.OPEN) return;
+
+      const room = document.getElementById("roomInput").value.trim() || "lobby";
+      const name = document.getElementById("nameInput").value.trim() || "Anon";
+      const url = "ws://" + location.host + "/ws/" +
+                  encodeURIComponent(room) + "/" +
+                  encodeURIComponent(name);
+
+      ws = new WebSocket(url);
+
+      ws.onopen = () => setStatus(true);
+      ws.onclose = () => setStatus(false);
+      ws.onerror = () => setStatus(false);
+
+      ws.onmessage = (ev) => {
+        let data;
+        try { data = JSON.parse(ev.data); } catch { return; }
+        if (data.type === "chat") appendLog(data);
+      };
+    }
+
+    function sendMsg() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      const input = document.getElementById("msgInput");
+      const text = input.value.trim();
+      if (!text) return;
+      ws.send(JSON.stringify({ type: "chat", text }));
+      input.value = "";
+    }
+
+    document.getElementById("connectBtn").onclick = connect;
+    document.getElementById("sendBtn").onclick = sendMsg;
+    document.getElementById("msgInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMsg();
+      }
+    });
+
+    setStatus(false);
+  </script>
+</body>
+</html>

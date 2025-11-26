@@ -1,0 +1,143 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; }
+
+/* Zentrale Startseite */
+.center {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #020617;
+  color: #e5e7eb;
+}
+.card {
+  background: #0b1120;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #1f2937;
+  max-width: 320px;
+}
+.btn {
+  display: inline-block;
+  margin: 4px 4px 0 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+/* Chat */
+.chat {
+  min-height: 100vh;
+  background: #020617;
+  color: #e5e7eb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+.panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 800px;
+  width: 100%;
+  background: #020617;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 12px;
+}
+@media (max-width: 720px) {
+  .panel { grid-template-columns: 1fr; }
+}
+.col h2 { margin-top: 0; font-size: 1rem; }
+label { display:block; margin-top:8px; font-size:0.8rem; }
+input {
+  width:100%; padding:6px 10px;
+  border-radius:8px;
+  border:1px solid #4b5563;
+  background:#020617;
+  color:#e5e7eb;
+}
+button {
+  margin-top:8px; padding:6px 12px;
+  border-radius:8px;
+  border:none;
+  background:#4f46e5;
+  color:#fff;
+  cursor:pointer;
+  font-size:0.9rem;
+}
+.status {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-top:6px;
+  font-size:0.8rem;
+}
+.dot {
+  width:8px; height:8px;
+  border-radius:50%;
+}
+.dot-on { background:#22c55e; }
+.dot-off { background:#f97316; }
+.row {
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+}
+.row input { flex:1; }
+#log {
+  list-style:none;
+  padding:0;
+  margin:0;
+  max-height:260px;
+  overflow-y:auto;
+  font-size:0.85rem;
+}
+
+/* Three.js */
+.three {
+  min-height: 100vh;
+  display:flex;
+  flex-direction:column;
+  background:#020617;
+  color:#e5e7eb;
+}
+.bar {
+  padding:6px 10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border-bottom:1px solid #1f2937;
+  font-size:0.85rem;
+}
+.bar input {
+  padding:4px 8px;
+  border-radius:8px;
+  border:1px solid #4b5563;
+  background:#020617;
+  color:#e5e7eb;
+}
+.bar button {
+  padding:4px 10px;
+  border-radius:8px;
+  border:none;
+  background:#4f46e5;
+  color:#fff;
+  cursor:pointer;
+  font-size:0.85rem;
+}
+.status-text {
+  margin-left:auto;
+}
+.three-main {
+  flex:1;
+}
+#three-container {
+  width:100%;
+  height:100%;
+}
+/* ------------------------------------------------------------ */

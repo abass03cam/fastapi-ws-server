@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>3D Cube</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="three">
+  <header class="bar">
+    <span>Room:</span>
+    <input id="roomInput" value="3d">
+    <span>Name:</span>
+    <input id="nameInput" value="Abass">
+    <button id="connectBtn">Verbinden</button>
+    <span id="statusText" class="status-text">● Getrennt</span>
+  </header>
+
+  <main class="three-main">
+    <div id="three-container"></div>
+  </main>
+
+  <script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+
+  <script>
+    let ws = null;
+    let username = "Anon";
+    let room = "3d";
+
+    let scene, camera, renderer, cube;
+    let lastSend = 0;
+
+    function setStatus(on) {
+      const s = document.getElementById("statusText");
+      if (on) {
+        s.style.color = "#22c55e";
+        s.textContent = "● Verbunden (" + username + " @ " + room + ")";
+      } else {
+        s.style.color = "#f97316";
+        s.textContent = "● Getrennt";
+      }
+    }
+
+    function initThree() {
+      const container = document.getElementById("three-container");
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || (window.innerHeight - 40);
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x020617);
+
+      camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
+      camera.position.set(0, 1.5, 4);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(w, h);
+      container.innerHTML = "";
+      container.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(2, 3, 4);
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0x404040));
+
+      const grid = new THREE.GridHelper(10, 10);
+      scene.add(grid);
+
+      const geom = new THREE.BoxGeometry(1, 1, 1);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x4f46e5 });
+      cube = new THREE.Mesh(geom, mat);
+      cube.position.set(0, 0.5, 0);
+      scene.add(cube);
+
+      function loop() {
+        requestAnimationFrame(loop);
+        renderer.render(scene, camera);
+      }
+      loop();
+
+      window.addEventListener("resize", onResize);
+      window.addEventListener("keydown", onKeyDown);
+    }
+
+    function onResize() {
+      if (!renderer || !camera) return;
+      const container = document.getElementById("three-container");
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || (window.innerHeight - 40);
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+
+    function moveCube(dx, dz) {
+      if (!cube) return;
+      cube.position.x += dx;
+      cube.position.z += dz;
+      sendObjectTransform();
+    }
+
+    function onKeyDown(e) {
+      const step = 0.3;
+      switch (e.key) {
+        case "ArrowUp":    moveCube(0, -step); break;
+        case "ArrowDown":  moveCube(0, step);  break;
+        case "ArrowLeft":  moveCube(-step, 0); break;
+        case "ArrowRight": moveCube(step, 0);  break;
+      }
+    }
+
+    function connectWS() {
+      if (ws && ws.readyState === WebSocket.OPEN) return;
+
+      room = document.getElementById("roomInput").value.trim() || "3d";
+      username = document.getElementById("nameInput").value.trim() || "Anon";
+
+      const url = "ws://" + location.host + "/ws/" +
+                  encodeURIComponent(room) + "/" +
+                  encodeURIComponent(username);
+
+      ws = new WebSocket(url);
+
+      ws.onopen = () => setStatus(true);
+      ws.onclose = () => setStatus(false);
+      ws.onerror = () => setStatus(false);
+
+      ws.onmessage = (ev) => {
+        let data;
+        try { data = JSON.parse(ev.data); } catch { return; }
+
+        if (data.type === "object_move" && data.id === "cube-1" && cube) {
+          const p = data.position || {};
+          const r = data.rotation || {};
+          cube.position.set(
+            p.x ?? cube.position.x,
+            p.y ?? cube.position.y,
+            p.z ?? cube.position.z
+          );
+          cube.rotation.set(
+            r.x ?? cube.rotation.x,
+            r.y ?? cube.rotation.y,
+            r.z ?? cube.rotation.z
+          );
+        }
+      };
+    }
+
+    function sendObjectTransform() {
+      if (!ws || ws.readyState !== WebSocket.OPEN || !cube) return;
+
+      const now = Date.now();
+      if (now - lastSend < 50) return;
+      lastSend = now;
+
+      ws.send(JSON.stringify({
+        type: "object_move",
+        id: "cube-1",
+        position: {
+          x: cube.position.x,
+          y: cube.position.y,
+          z: cube.position.z
+        },
+        rotation: {
+          x: cube.rotation.x,
+          y: cube.rotation.y,
+          z: cube.rotation.z
+        }
+      }));
+    }
+
+    window.addEventListener("load", () => {
+      initThree();
+      setStatus(false);
+      document.getElementById("connectBtn").onclick = connectWS;
+    });
+  </script>
+</body>
+</html>
